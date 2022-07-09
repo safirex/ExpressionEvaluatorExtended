@@ -18,6 +18,12 @@ namespace ExpressionEvaluatorExtended
             Right
         }
 
+        public struct UserInput
+        {
+            public string name;
+            public float value;
+        }
+
         private struct Operator
         {
             public char character;
@@ -45,7 +51,7 @@ namespace ExpressionEvaluatorExtended
             new Operator('*', 3, 2, Associativity.Left),
             new Operator('%', 3, 2, Associativity.Left),
             new Operator('^', 4, 2, Associativity.Right),
-            new Operator('u', 4, 1, Associativity.Left)
+            new Operator('u', 4, 1, Associativity.Left)     // ???
         };
 
         public static bool Evaluate<T>(string expression, out T value)
@@ -62,6 +68,25 @@ namespace ExpressionEvaluatorExtended
             return Evaluate(tokens2, out value);
         }
 
+        public static bool Evaluate<T>(string expression, UserInput[] dict, out T value)
+        {
+            if (TryParse<T>(expression, out value))
+            {
+                return true;
+            }
+
+            Dictionary<string, T> newdict = new Dictionary<string, T>();
+            foreach (UserInput item in dict)
+            {
+                newdict.Add(item.name, (T)(object)item.value);
+            }
+
+            string[] tokens  = ExtendedEvaluation(expression, newdict);
+            return Evaluate(tokens, out value);
+        }
+
+
+
         public static bool Evaluate<T>(string expression, Dictionary<string, T> dict, out T value)
         {
 
@@ -70,13 +95,23 @@ namespace ExpressionEvaluatorExtended
                 return true;
             }
 
+            string[] tokens = ExtendedEvaluation(expression, dict);
+            return Evaluate(tokens, out value);
+
+        }
+
+        public static string[] ExtendedEvaluation<T>(string expression, Dictionary<string, T> dict)
+        {
             expression = PreFormatExpression(expression);
             string[] tokens = ExpressionToTokens(expression);
             tokens = FixUnaryOperators(tokens);
             string[] tokens2 = InfixToRPN(tokens);
-            string[] tokens3 = ExpressionToUserInput(tokens2,dict);
-            return Evaluate(tokens3, out value);
+            string[] tokens3 = ExpressionToUserInput(tokens2, dict);
+            return tokens3;
         }
+
+
+
 
         private static string[] ExpressionToUserInput<T>(string[] tokens, Dictionary<string,T> dict)
         {
